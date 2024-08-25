@@ -1,3 +1,9 @@
+### Setting up
+
+Everything is standard git/Rust, except that the git hooks are stored in the `hooks` directory. Run `git config --local core.hooksPath .githooks` when setting up a new environment.
+
+### Info
+
 An experimental simulation, made so that I can play around with various technologies (for example, OpenGL).
 
 As of this writing, the project is fairly bare-bones, but I might add more features to it later.
