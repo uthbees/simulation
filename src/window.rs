@@ -11,8 +11,10 @@ pub fn run() {
     // something goes wrong.
     env_logger::init();
 
-    let event_loop = EventLoop::new().unwrap();
-    let window = WindowBuilder::new().build(&event_loop).unwrap();
+    let event_loop = EventLoop::new().expect("Failed to initialize main event loop.");
+    let window = WindowBuilder::new()
+        .build(&event_loop)
+        .expect("Failed to create window.");
 
     // TODO: Fix this properly once I learn more about Rust (match, at least).
     #[allow(clippy::collapsible_match)]
@@ -37,5 +39,5 @@ pub fn run() {
             },
             _ => {}
         })
-        .unwrap();
+        .expect("Main event loop failed.");
 }
