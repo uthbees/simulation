@@ -21,7 +21,7 @@ pub fn run() {
         if #[cfg(target_arch = "wasm32")] {
             // Set up logging for the web. We have to do this specially since env_logger doesn't support wasm.
             std::panic::set_hook(Box::new(console_error_panic_hook::hook));
-            console_log::init_with_level(log::Level::Warn).expect("Couldn't initialize logger.");
+            console_log::init_with_level(log::Level::Warn).expect("Couldn't initialize logger");
         } else {
             // Even if we're running normally, we still have to do special setup for logging. When
             // wgpu hits any error, it panics with a generic message, while logging the real error
@@ -31,10 +31,10 @@ pub fn run() {
         }
     }
 
-    let event_loop = EventLoop::new().expect("Failed to initialize main event loop.");
+    let event_loop = EventLoop::new().expect("Failed to initialize main event loop");
     let window = WindowBuilder::new()
         .build(&event_loop)
-        .expect("Failed to create window.");
+        .expect("Failed to create window");
 
     #[cfg(target_arch = "wasm32")]
     {
@@ -50,7 +50,7 @@ pub fn run() {
                 destination.append_child(&canvas).ok()?;
                 Some(())
             })
-            .expect("Couldn't append canvas to document body.");
+            .expect("Couldn't append canvas to document");
 
         // winit doesn't allow sizing with CSS, so we have to set the size manually when on web.
         // Note that this sets the size of the canvas on web, not the window itself.
@@ -80,5 +80,5 @@ pub fn run() {
             },
             _ => {}
         })
-        .expect("Main event loop failed.");
+        .expect("Main event loop failed");
 }
