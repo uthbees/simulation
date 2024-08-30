@@ -58,27 +58,25 @@ pub fn run() {
     }
 
     // TODO: Use EventLoopExtWebSys::spawn() instead of run on web to avoid the JS exception trick.
-    // TODO: Review this stuff and fix this clippy error properly once I learn more about Rust (probably patterns and callbacks).
-    #[allow(clippy::collapsible_match)]
     event_loop
-        .run(move |event, control_flow| match event {
-            Event::WindowEvent {
-                ref event,
-                window_id,
-            } if window_id == window.id() => match event {
-                WindowEvent::CloseRequested
-                | WindowEvent::KeyboardInput {
-                    event:
-                        KeyEvent {
-                            state: ElementState::Pressed,
-                            physical_key: PhysicalKey::Code(KeyCode::Escape),
-                            ..
-                        },
-                    ..
-                } => control_flow.exit(),
-                _ => {}
-            },
-            _ => {}
+        .run(move |event, control_flow| {
+            if let Event::WindowEvent {
+                event:
+                    WindowEvent::CloseRequested
+                    | WindowEvent::KeyboardInput {
+                        event:
+                            KeyEvent {
+                                state: ElementState::Pressed,
+                                physical_key: PhysicalKey::Code(KeyCode::Escape),
+                                ..
+                            },
+                        ..
+                    },
+                ..
+            } = event
+            {
+                control_flow.exit();
+            }
         })
         .expect("Main event loop failed");
 }
