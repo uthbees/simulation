@@ -1,6 +1,5 @@
 #![warn(clippy::all)]
 #![warn(clippy::pedantic)]
-// Use .expect() with a helpful message instead.
 #![warn(clippy::unwrap_used)]
 #![allow(clippy::missing_panics_doc)]
 
@@ -30,7 +29,6 @@ pub fn run() {
     let event_loop = EventLoop::new().expect("Failed to initialize main event loop");
     let window = init_window(&event_loop);
 
-    // TODO: Figure out how to use lifetimes and change it so that the renderer just borrows the window.
     let renderer = Renderer::new(window);
     let mut ui = Ui::new();
     let mut world = World::new();
@@ -87,13 +85,12 @@ fn init_window(event_loop: &EventLoop<()>) -> Window {
     #[cfg(target_arch = "wasm32")]
     {
         use winit::dpi::LogicalSize;
-
-        // TODO: Review the next two "lines" once I learn more about Rust.
         use winit::platform::web::WindowExtWebSys;
+
         web_sys::window()
-            .and_then(|win| win.document())
-            .and_then(|doc| {
-                let destination = doc.get_element_by_id("canvas-holder")?;
+            .and_then(|js_window| js_window.document())
+            .and_then(|document| {
+                let destination = document.get_element_by_id("canvas-holder")?;
                 let canvas = web_sys::Element::from(window.canvas()?);
                 destination.append_child(&canvas).ok()?;
                 Some(())
