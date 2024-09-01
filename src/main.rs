@@ -1,3 +1,5 @@
+use pollster::block_on;
+
 fn main() {
-    simulation::run();
+    block_on(simulation::run());
 }

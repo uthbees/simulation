@@ -3,11 +3,11 @@
 #![warn(clippy::unwrap_used)]
 #![allow(clippy::missing_panics_doc)]
 
-mod renderer;
+mod render;
 mod ui;
 mod world;
 
-use crate::renderer::Renderer;
+use crate::render::Renderer;
 pub use crate::ui::Ui;
 pub use crate::world::World;
 use cfg_if::cfg_if;
@@ -23,42 +23,59 @@ use winit::{
 };
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
-pub fn run() {
+pub async fn run() {
     init_logging();
 
     let event_loop = EventLoop::new().expect("Failed to initialize main event loop");
     let window = init_window(&event_loop);
 
-    let renderer = Renderer::new(window);
+    let renderer = Renderer::new(&window).await;
     let mut ui = Ui::new();
     let mut world = World::new();
 
     // TODO: Update the event loop to handle inputs and window resizing and to call renderer.render().
     // TODO: Use EventLoopExtWebSys::spawn() instead of run on web to avoid the JS exception trick.
     event_loop
-        .run(move |event, control_flow| {
-            if let Event::WindowEvent {
+        .run(|event, control_flow| match event {
+            Event::WindowEvent {
+                event: WindowEvent::RedrawRequested,
+                ..
+            } => {
+                match renderer.render(&ui, &world) {
+                    Ok(_) => {}
+                    // Reconfigure the surface if lost.
+                    Err(wgpu::SurfaceError::Lost) => {} // TODO: Call surface.configure somehow.
+                    // If the system is out of memory, we should probably quit.
+                    Err(wgpu::SurfaceError::OutOfMemory) => control_flow.exit(),
+                    // The other errors (Outdated, Timeout) should be resolved by the next frame.
+                    Err(error) => eprintln!("{:?}", error),
+                }
+            }
+            Event::WindowEvent {
                 event:
-                    WindowEvent::CloseRequested
-                    | WindowEvent::KeyboardInput {
-                        event:
-                            KeyEvent {
-                                state: ElementState::Pressed,
-                                physical_key: PhysicalKey::Code(KeyCode::Escape),
-                                ..
-                            },
+                WindowEvent::CloseRequested
+                | WindowEvent::KeyboardInput {
+                    event:
+                    KeyEvent {
+                        state: ElementState::Pressed,
+                        physical_key: PhysicalKey::Code(KeyCode::Escape),
                         ..
                     },
+                    ..
+                },
                 ..
-            } = event
-            {
-                control_flow.exit();
+            } => control_flow.exit(),
+            Event::AboutToWait => {
+                // Temporary until we get the main loop running.
+                window.request_redraw();
             }
+            _ => {}
         })
         .expect("Main event loop failed");
 
-    // TODO: Implement the simulation loop (calling world.tick() and window.request_redraw()).
+    // TODO: Implement the simulation loop (calling world.tick and window.request_redraw).
     //  Ideally, this should be done in such a way that we can maintain 60 UPS even if we dip below 60 FPS.
+    //  Make sure to remove the request_redraw call from the event loop.
 }
 
 fn init_logging() {

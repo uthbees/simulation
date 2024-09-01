@@ -4,8 +4,8 @@ use winit::event::WindowEvent;
 pub struct Ui {}
 
 impl Ui {
-    pub fn new() -> Ui {
-        Ui {}
+    pub fn new() -> Self {
+        Self {}
     }
 
     pub fn handle_input(&mut self, event: &WindowEvent) {}
