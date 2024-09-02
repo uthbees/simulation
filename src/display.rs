@@ -1,17 +1,20 @@
-use crate::{Ui, World};
 use std::iter::once;
-use wgpu::{Device, PresentMode, Queue, Surface};
-use winit::window::Window;
 
-/// An object that handles rendering the application state onto the screen.
-pub struct Renderer<'a> {
+use wgpu::{Device, PresentMode, Queue, Surface, SurfaceConfiguration};
+use winit::dpi::PhysicalSize;
+use winit::event_loop::EventLoop;
+use winit::window::{Window, WindowBuilder};
+
+pub struct Display<'a> {
+    window: &'a Window,
     surface: Surface<'a>,
     device: Device,
     queue: Queue,
+    config: SurfaceConfiguration,
 }
 
-impl Renderer<'_> {
-    pub async fn new(window: &Window) -> Self {
+impl<'a> Display<'a> {
+    pub async fn new(window: &'a Window) -> Self {
         #[cfg(not(target_arch = "wasm32"))]
         let enabled_backends = wgpu::Backends::PRIMARY;
         #[cfg(target_arch = "wasm32")]
@@ -23,7 +26,7 @@ impl Renderer<'_> {
         });
 
         let surface = wgpu_instance
-            .create_surface(&window)
+            .create_surface(window)
             .expect("Failed to initialize renderer: couldn't create surface");
 
         let adapter = wgpu_instance
@@ -62,7 +65,7 @@ impl Renderer<'_> {
             .find(|f| f.is_srgb())
             .copied()
             .unwrap_or(capabilities.formats[0]);
-        let config = wgpu::SurfaceConfiguration {
+        let config = SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
             width: win_size.width,
@@ -74,15 +77,35 @@ impl Renderer<'_> {
         };
 
         Self {
+            window,
             surface,
             device,
             queue,
-            // config,
-            // size,
+            config,
         }
     }
 
-    pub fn render(&self, ui: &Ui, world: &World) -> Result<(), wgpu::SurfaceError> {
+    /// Returns a reference to the Window object.
+    ///
+    /// We have to do things this way instead of just using the object directly because the Surface
+    /// object needs to be next to the borrowed Window object in the struct (not owned!).
+    pub fn window(&self) -> &Window {
+        self.window
+    }
+
+    pub fn resize(&mut self, new_size: PhysicalSize<u32>) {
+        if new_size.width > 0 && new_size.height > 0 {
+            self.config.width = new_size.width;
+            self.config.height = new_size.height;
+            self.configure_surface();
+        }
+    }
+
+    pub fn configure_surface(&self) {
+        self.surface.configure(&self.device, &self.config);
+    }
+
+    pub fn render(&self) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
         let view = output
             .texture
@@ -119,4 +142,32 @@ impl Renderer<'_> {
 
         Ok(())
     }
+}
+
+pub fn create_window(event_loop: &EventLoop<()>) -> Window {
+    let window = WindowBuilder::new()
+        .build(event_loop)
+        .expect("Failed to create window");
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        use winit::dpi::LogicalSize;
+        use winit::platform::web::WindowExtWebSys;
+
+        web_sys::window()
+            .and_then(|js_window| js_window.document())
+            .and_then(|document| {
+                let destination = document.get_element_by_id("canvas-holder")?;
+                let canvas = web_sys::Element::from(window.canvas()?);
+                destination.append_child(&canvas).ok()?;
+                Some(())
+            })
+            .expect("Couldn't append canvas to document");
+
+        // winit doesn't allow sizing with CSS, so we have to set the size manually when on web.
+        // Note that this sets the size of the canvas on web, not the window itself.
+        let _ = window.request_inner_size(LogicalSize::new(1000, 500));
+    }
+
+    window
 }
