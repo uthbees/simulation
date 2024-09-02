@@ -4,11 +4,14 @@
 #![allow(clippy::missing_panics_doc)]
 #![allow(clippy::missing_errors_doc)]
 
+use std::ops::{Add, AddAssign};
+use std::time::{Duration, Instant};
+
 use cfg_if::cfg_if;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
-use winit::event::{Event, WindowEvent};
-use winit::event_loop::EventLoop;
+use winit::event::{Event, StartCause, WindowEvent};
+use winit::event_loop::{ControlFlow, EventLoop};
 
 use crate::display::{create_window, Display};
 pub use crate::ui::Ui;
@@ -28,17 +31,12 @@ pub async fn run() {
 
     let mut display = Display::new(&window).await;
 
-    /*
-    Desired event loop:
-    loop {
-    update
-    render
-    wait for next frame (use set_control_flow(WaitUntil) for now, but make sure to log any dropped frames)
-    }
-    */
+    let mut next_frame_start_time = Instant::now();
+    let frame_length_as_d = Duration::from_secs_f32(FRAME_LENGTH);
 
     // TODO: Use EventLoopExtWebSys::spawn() instead of run() on web to avoid the JS exception trick.
     // TODO: Fix the panic on web (low priority since the current functionality still works).
+    event_loop.set_control_flow(ControlFlow::Poll);
     event_loop
         .run(move |event, control_flow| match event {
             Event::WindowEvent {
@@ -63,17 +61,37 @@ pub async fn run() {
                 event: WindowEvent::CloseRequested,
                 ..
             } => control_flow.exit(),
-            Event::AboutToWait => {
-                // Temporary until we get the main loop running.
-                display.window().request_redraw();
-            }
+            Event::NewEvents(cause)
+            if cause == StartCause::Poll && Instant::now() >= next_frame_start_time =>
+                {
+                    temp_update();
+
+                    display.window().request_redraw();
+
+                    // Increment the frame counter.
+                    next_frame_start_time += frame_length_as_d;
+
+                    // Drop any missed frames.
+                    let mut proposed_next_frame_time = next_frame_start_time.add(frame_length_as_d);
+                    while proposed_next_frame_time < Instant::now() {
+                        eprintln!("Dropped a frame.");
+                        next_frame_start_time = proposed_next_frame_time;
+                        proposed_next_frame_time = next_frame_start_time.add(frame_length_as_d);
+                    }
+                }
             _ => {}
         })
         .expect("Main event loop failed");
+}
 
-    // TODO: Implement the simulation loop (calling world.tick and window.request_redraw).
-    //  Ideally, this should be done in such a way that we can maintain 60 UPS even if we dip below 60 FPS.
-    //  Make sure to remove the request_redraw call from the event loop.
+const FRAME_LENGTH: f32 = 1.0 / 60.0;
+
+/// Pretend we're doing work to process the next tick. A placeholder for when we actually do need to do that work later.
+fn temp_update() {
+    println!("Updating...");
+    let start_time = Instant::now();
+    let target_time = start_time.add(Duration::new(0, 10 * 1_000_000));
+    while Instant::now() < target_time {}
 }
 
 /// Sets up logging for whatever platform we're running on.
