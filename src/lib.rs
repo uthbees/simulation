@@ -18,8 +18,6 @@ pub mod display;
 pub mod ui;
 pub mod world;
 
-// TODO: Test whether we actually need wasm-bindgen-futures.
-
 /// Runs the application. Called by WASM directly.
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub async fn run() {
@@ -40,6 +38,7 @@ pub async fn run() {
     */
 
     // TODO: Use EventLoopExtWebSys::spawn() instead of run() on web to avoid the JS exception trick.
+    // TODO: Fix the panic on web (low priority since the current functionality still works).
     event_loop
         .run(move |event, control_flow| match event {
             Event::WindowEvent {

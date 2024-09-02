@@ -68,13 +68,24 @@ impl<'a> Display<'a> {
         let config = SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
-            width: win_size.width,
-            height: win_size.height,
+            width: if win_size.width > 0 {
+                win_size.width
+            } else {
+                1
+            },
+            height: if win_size.height > 0 {
+                win_size.height
+            } else {
+                1
+            },
             present_mode: PresentMode::Fifo,
             alpha_mode: capabilities.alpha_modes[0],
             view_formats: vec![],
             desired_maximum_frame_latency: 2,
         };
+
+        // Initialize the surface. Doing this now is necessary for WASM and decreases wait time for desktop.
+        surface.configure(&device, &config);
 
         Self {
             window,
@@ -151,7 +162,6 @@ pub fn create_window(event_loop: &EventLoop<()>) -> Window {
 
     #[cfg(target_arch = "wasm32")]
     {
-        use winit::dpi::LogicalSize;
         use winit::platform::web::WindowExtWebSys;
 
         web_sys::window()
@@ -166,7 +176,7 @@ pub fn create_window(event_loop: &EventLoop<()>) -> Window {
 
         // winit doesn't allow sizing with CSS, so we have to set the size manually when on web.
         // Note that this sets the size of the canvas on web, not the window itself.
-        let _ = window.request_inner_size(LogicalSize::new(1000, 500));
+        let _ = window.request_inner_size(PhysicalSize::new(2048, 1024));
     }
 
     window
