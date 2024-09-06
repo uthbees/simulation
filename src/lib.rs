@@ -5,7 +5,7 @@
 #![allow(clippy::missing_errors_doc)]
 
 use std::ops::Add;
-use std::time::{Duration, Instant};
+use web_time::{Duration, Instant};
 
 use cfg_if::cfg_if;
 #[cfg(target_arch = "wasm32")]
@@ -35,7 +35,6 @@ pub async fn run() {
     let frame_length_as_d = Duration::from_secs_f32(FRAME_LENGTH);
 
     // TODO: Use EventLoopExtWebSys::spawn() instead of run() on web to avoid the JS exception trick.
-    // TODO: Fix the panic on web (low priority since the current functionality still works).
     event_loop.set_control_flow(ControlFlow::Poll);
     event_loop
         .run(move |event, control_flow| match event {
