@@ -62,23 +62,23 @@ pub async fn run() {
                 ..
             } => control_flow.exit(),
             Event::NewEvents(cause)
-            if cause == StartCause::Poll && Instant::now() >= next_frame_start_time =>
-                {
-                    temp_update();
+                if cause == StartCause::Poll && Instant::now() >= next_frame_start_time =>
+            {
+                temp_update();
 
-                    display.window().request_redraw();
+                display.window().request_redraw();
 
-                    // Increment the frame counter.
-                    next_frame_start_time += frame_length_as_d;
+                // Increment the frame counter.
+                next_frame_start_time += frame_length_as_d;
 
-                    // Drop any missed frames.
-                    let mut proposed_next_frame_time = next_frame_start_time.add(frame_length_as_d);
-                    while proposed_next_frame_time < Instant::now() {
-                        eprintln!("Dropped a frame.");
-                        next_frame_start_time = proposed_next_frame_time;
-                        proposed_next_frame_time = next_frame_start_time.add(frame_length_as_d);
-                    }
+                // Drop any missed frames.
+                let mut proposed_next_frame_time = next_frame_start_time.add(frame_length_as_d);
+                while proposed_next_frame_time < Instant::now() {
+                    eprintln!("Dropped a frame.");
+                    next_frame_start_time = proposed_next_frame_time;
+                    proposed_next_frame_time = next_frame_start_time.add(frame_length_as_d);
                 }
+            }
             _ => {}
         })
         .expect("Main event loop failed");
