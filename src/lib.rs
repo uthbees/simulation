@@ -4,7 +4,7 @@
 #![allow(clippy::missing_panics_doc)]
 #![allow(clippy::missing_errors_doc)]
 
-use std::ops::{Add, AddAssign};
+use std::ops::Add;
 use std::time::{Duration, Instant};
 
 use cfg_if::cfg_if;
@@ -13,7 +13,7 @@ use wasm_bindgen::prelude::*;
 use winit::event::{Event, StartCause, WindowEvent};
 use winit::event_loop::{ControlFlow, EventLoop};
 
-use crate::display::{create_window, Display};
+use crate::display::Display;
 pub use crate::ui::Ui;
 pub use crate::world::World;
 
@@ -27,7 +27,7 @@ pub async fn run() {
     init_logging();
 
     let event_loop = EventLoop::new().expect("Failed to initialize main event loop");
-    let window = create_window(&event_loop);
+    let window = display::create_window(&event_loop);
 
     let mut display = Display::new(&window).await;
 
