@@ -1,7 +1,13 @@
 #!/bin/bash
 
 # Run rustfmt on all modified files.
-# https://stackoverflow.com/a/71222423
+# Based on: https://stackoverflow.com/a/71222423
+
+edition=$(echo "$(cat Cargo.toml)" | grep -oP '^(?!#)\s*edition\s*=\s*"\K.*(?=")' | head -n 1)
+
+if [[ -z "$edition" ]]; then
+  edition=2015
+fi
 
 exe=$(which rustfmt)
 
@@ -19,7 +25,7 @@ then
             if [[ $line == *.rs ]]
             then
                 # format file
-                rustfmt $(pwd)/${line:3}
+                rustfmt $(pwd)/${line:3} --edition $edition
                 # add changes
                 git add $(pwd)/${line:3}
             fi
