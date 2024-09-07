@@ -15,6 +15,8 @@ pub struct Display<'a> {
 }
 
 impl<'a> Display<'a> {
+    // TODO: Break this function up.
+    #[expect(clippy::too_many_lines)]
     pub async fn new(window: &'a Window) -> Self {
         #[cfg(not(target_arch = "wasm32"))]
         let enabled_backends = wgpu::Backends::PRIMARY;
@@ -198,7 +200,7 @@ impl<'a> Display<'a> {
         render_pass.set_pipeline(&self.render_pipeline);
         render_pass.draw(0..3, 0..1);
 
-        // We have to explicitly drop the render pass before calling encoder.finish() or wgpu will panic.
+        // We have to explicitly end the render pass by dropping it before calling encoder.finish().
         drop(render_pass);
 
         self.queue.submit(once(encoder.finish()));
@@ -233,4 +235,25 @@ pub fn create_window(event_loop: &EventLoop<()>) -> Window {
     }
 
     window
+}
+
+/// Converts a color value from the standard srgb format (eg (0, 255, 127)) to the linear rgb format that wgpu expects.
+/// See [the Wikipedia article on sRGB](https://en.wikipedia.org/wiki/SRGB#From_sRGB_to_CIE_XYZ).
+#[must_use]
+fn get_linear_rgb(standard_rgb: [i32; 3]) -> [f64; 3] {
+    fn get_linear_color(standard_color: i32) -> f64 {
+        let normalized_standard_color = f64::from(standard_color) / 255.0;
+
+        if normalized_standard_color <= 0.04045 {
+            return normalized_standard_color / 12.92;
+        }
+
+        ((normalized_standard_color + 0.055) / 1.055).powf(2.4)
+    }
+
+    [
+        get_linear_color(standard_rgb[0]),
+        get_linear_color(standard_rgb[1]),
+        get_linear_color(standard_rgb[2]),
+    ]
 }
