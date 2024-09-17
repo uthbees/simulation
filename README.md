@@ -15,4 +15,4 @@ Features:
 - Simple map rendering with a low-level graphics API provided by wgpu
 - Available on both desktop and WASM (mostly thanks to winit and wgpu doing all the platform interfacing stuff for me)
 
-This project began as my final project for CSE 210 Programming With Classes. The assignment was to make something interesting, so I did, but I took it a little further than was required and continued to work on it after finishing the class. This included porting it from C# to Rust so that I could compile it to WASM (and because I wanted to learn Rust).
+This project was inspired by the final project assignment for CSE 210 Programming With Classes, which was to make a program that could "perform an interesting task or function." The idea I came up with was so interesting to me that I took the project way beyond the expected scope and continued working on it after the class was over. This included rewriting it in Rust (the original language was C#) so that I could compile it to WASM (and because I wanted to learn Rust).
