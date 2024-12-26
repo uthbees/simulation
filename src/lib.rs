@@ -15,11 +15,6 @@ pub mod display;
 pub mod ui;
 pub mod world;
 
-struct AppState<'a> {
-    display: Display<'a>,
-    next_frame_start_time: Instant,
-}
-
 /// Runs the application. Called by WASM directly.
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub async fn run() {
@@ -38,6 +33,11 @@ pub async fn run() {
     event_loop
         .run(move |event, control_flow| handle_winit_event(&event, control_flow, &mut app_state))
         .expect("Main event loop failed");
+}
+
+struct AppState<'a> {
+    display: Display<'a>,
+    next_frame_start_time: Instant,
 }
 
 fn handle_winit_event(
