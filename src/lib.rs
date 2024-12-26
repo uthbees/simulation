@@ -48,7 +48,7 @@ fn handle_winit_event(
     let frame_length_as_d = Duration::from_secs_f32(FRAME_LENGTH);
     let AppState {
         ref mut display,
-        mut next_frame_start_time,
+        ref mut next_frame_start_time,
     } = app_state;
 
     match *event {
@@ -75,20 +75,23 @@ fn handle_winit_event(
             ..
         } => control_flow.exit(),
         Event::NewEvents(cause)
-            if cause == StartCause::Poll && Instant::now() >= next_frame_start_time =>
+            if cause == StartCause::Poll && Instant::now() >= *next_frame_start_time =>
         {
             temp_update();
 
             display.window().request_redraw();
 
             // Increment the frame counter.
-            next_frame_start_time += frame_length_as_d;
+            *next_frame_start_time += frame_length_as_d;
 
             // Drop any missed frames.
             let mut proposed_next_frame_time = next_frame_start_time.add(frame_length_as_d);
             while proposed_next_frame_time < Instant::now() {
-                eprintln!("Dropped a frame.");
-                next_frame_start_time = proposed_next_frame_time;
+                eprintln!(
+                    "Dropped a frame. (Missed it by {:?}.)",
+                    proposed_next_frame_time.elapsed()
+                );
+                *next_frame_start_time = proposed_next_frame_time;
                 proposed_next_frame_time = next_frame_start_time.add(frame_length_as_d);
             }
         }
