@@ -1,6 +1,10 @@
 use std::iter::once;
 
-use wgpu::{Device, PresentMode, Queue, RenderPipeline, Surface, SurfaceConfiguration};
+use wgpu::util::{BufferInitDescriptor, DeviceExt};
+use wgpu::{
+    Buffer, BufferAddress, Device, PresentMode, Queue, RenderPipeline, Surface,
+    SurfaceConfiguration, VertexBufferLayout, VertexFormat, VertexStepMode,
+};
 use winit::dpi::PhysicalSize;
 use winit::event_loop::EventLoop;
 use winit::window::{Window, WindowBuilder};
@@ -12,6 +16,7 @@ pub struct Display<'a> {
     queue: Queue,
     config: SurfaceConfiguration,
     render_pipeline: RenderPipeline,
+    vertex_buffer: Buffer,
 }
 
 impl<'a> Display<'a> {
@@ -104,7 +109,7 @@ impl<'a> Display<'a> {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vert_main",
-                buffers: &[],
+                buffers: &[Vertex::layout()],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             },
             fragment: Some(wgpu::FragmentState {
@@ -136,6 +141,12 @@ impl<'a> Display<'a> {
             cache: None,
         });
 
+        let vertex_buffer = device.create_buffer_init(&BufferInitDescriptor {
+            label: Some("Vertex buffer"),
+            contents: bytemuck::cast_slice(VERTICES),
+            usage: wgpu::BufferUsages::VERTEX,
+        });
+
         Self {
             window,
             surface,
@@ -143,6 +154,7 @@ impl<'a> Display<'a> {
             queue,
             config,
             render_pipeline,
+            vertex_buffer,
         }
     }
 
@@ -198,7 +210,8 @@ impl<'a> Display<'a> {
         });
 
         render_pass.set_pipeline(&self.render_pipeline);
-        render_pass.draw(0..3, 0..1);
+        render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+        render_pass.draw(0..(VERTICES.len() as u32), 0..1);
 
         // We have to explicitly end the render pass by dropping it before calling encoder.finish().
         drop(render_pass);
@@ -209,6 +222,49 @@ impl<'a> Display<'a> {
         Ok(())
     }
 }
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+struct Vertex {
+    position: [f32; 3],
+    color: [f32; 3],
+}
+
+impl Vertex {
+    fn layout() -> VertexBufferLayout<'static> {
+        VertexBufferLayout {
+            array_stride: size_of::<Vertex>() as BufferAddress,
+            step_mode: VertexStepMode::Vertex,
+            attributes: &[
+                wgpu::VertexAttribute {
+                    offset: 0,
+                    shader_location: 0,
+                    format: VertexFormat::Float32x3,
+                },
+                wgpu::VertexAttribute {
+                    offset: size_of::<[f32; 3]>() as BufferAddress,
+                    shader_location: 1,
+                    format: VertexFormat::Float32x3,
+                },
+            ],
+        }
+    }
+}
+
+const VERTICES: &[Vertex] = &[
+    Vertex {
+        position: [0.0, 0.5, 0.0],
+        color: [1.0, 0.0, 0.0],
+    },
+    Vertex {
+        position: [-0.5, -0.5, 0.0],
+        color: [0.0, 1.0, 0.0],
+    },
+    Vertex {
+        position: [0.5, -0.5, 0.0],
+        color: [0.0, 0.0, 1.0],
+    },
+];
 
 pub fn create_window(event_loop: &EventLoop<()>) -> Window {
     let window = WindowBuilder::new()
