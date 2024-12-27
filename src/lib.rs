@@ -8,12 +8,12 @@ use winit::event::{Event, StartCause, WindowEvent};
 use winit::event_loop::{ControlFlow, EventLoop, EventLoopWindowTarget};
 
 use crate::display::Display;
-pub use crate::ui::Ui;
-pub use crate::world::World;
+use crate::ui::Ui;
+use crate::world::World;
 
-pub mod display;
-pub mod ui;
-pub mod world;
+mod display;
+mod ui;
+mod world;
 
 /// Runs the application. Called by WASM directly.
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
@@ -23,9 +23,15 @@ pub async fn run() {
     let event_loop = EventLoop::new().expect("Failed to initialize main event loop");
     let window = display::create_window(&event_loop);
 
-    let mut app_state = AppState {
+    let mut app_state = App {
         display: Display::new(&window).await,
         next_frame_start_time: Instant::now(),
+        ui: Ui {
+            ..Default::default()
+        },
+        world: World {
+            ..Default::default()
+        },
     };
 
     // TODO: Use EventLoopExtWebSys::spawn() instead of run() on web to avoid the JS exception trick.
@@ -35,20 +41,24 @@ pub async fn run() {
         .expect("Main event loop failed");
 }
 
-struct AppState<'a> {
+struct App<'a> {
     display: Display<'a>,
     next_frame_start_time: Instant,
+    ui: Ui,
+    world: World,
 }
 
 fn handle_winit_event(
     event: &Event<()>,
     control_flow: &EventLoopWindowTarget<()>,
-    app_state: &mut AppState,
+    app_state: &mut App,
 ) {
-    let frame_length_as_d = Duration::from_secs_f32(FRAME_LENGTH);
-    let AppState {
+    let frame_length = Duration::from_secs_f32(FRAME_LENGTH);
+    let App {
         ref mut display,
         ref mut next_frame_start_time,
+        ref mut ui,
+        ref mut world,
     } = app_state;
 
     match *event {
@@ -56,7 +66,7 @@ fn handle_winit_event(
             event: WindowEvent::RedrawRequested,
             ..
         } => {
-            match display.render() {
+            match display.render(ui, world) {
                 Ok(()) => {}
                 // Reconfigure the surface if lost.
                 Err(wgpu::SurfaceError::Lost) => display.configure_surface(),
@@ -77,22 +87,22 @@ fn handle_winit_event(
         Event::NewEvents(cause)
             if cause == StartCause::Poll && Instant::now() >= *next_frame_start_time =>
         {
-            temp_update();
+            world.tick();
 
             display.window().request_redraw();
 
             // Increment the frame counter.
-            *next_frame_start_time += frame_length_as_d;
+            *next_frame_start_time += frame_length;
 
             // Drop any missed frames.
-            let mut proposed_next_frame_time = next_frame_start_time.add(frame_length_as_d);
+            let mut proposed_next_frame_time = next_frame_start_time.add(frame_length);
             while proposed_next_frame_time < Instant::now() {
                 eprintln!(
                     "Dropped a frame. (Missed it by {:?}.)",
                     proposed_next_frame_time.elapsed()
                 );
                 *next_frame_start_time = proposed_next_frame_time;
-                proposed_next_frame_time = next_frame_start_time.add(frame_length_as_d);
+                proposed_next_frame_time = next_frame_start_time.add(frame_length);
             }
         }
         _ => {}
@@ -100,14 +110,6 @@ fn handle_winit_event(
 }
 
 const FRAME_LENGTH: f32 = 1.0 / 60.0;
-
-/// Pretend we're doing work to process the next tick. A placeholder for when we actually do need to do that work later.
-fn temp_update() {
-    println!("Updating...");
-    let start_time = Instant::now();
-    let target_time = start_time.add(Duration::new(0, 10 * 1_000_000));
-    while Instant::now() < target_time {}
-}
 
 /// Sets up logging for whatever platform we're running on.
 pub fn init_logging() {

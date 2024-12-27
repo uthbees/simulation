@@ -1,5 +1,6 @@
 use std::iter::once;
 
+use crate::{Ui, World};
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use wgpu::{
     Buffer, BufferAddress, Device, PresentMode, Queue, RenderPipeline, Surface,
@@ -207,7 +208,7 @@ impl<'a> Display<'a> {
         self.surface.configure(&self.device, &self.config);
     }
 
-    pub fn render(&self) -> Result<(), wgpu::SurfaceError> {
+    pub fn render(&self, ui: &Ui, world: &World) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
         let view = output
             .texture
