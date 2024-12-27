@@ -17,7 +17,10 @@ pub struct Display<'a> {
     config: SurfaceConfiguration,
     render_pipeline: RenderPipeline,
     vertex_buffer: Buffer,
+    index_buffer: Buffer,
 }
+
+const INDICES: &[u16] = &[0, 1, 2, 0, 2, 3];
 
 impl<'a> Display<'a> {
     // TODO: Break this function up.
@@ -141,10 +144,35 @@ impl<'a> Display<'a> {
             cache: None,
         });
 
+        let vertices: &[Vertex] = &[
+            Vertex {
+                position: [0.5, 0.5, 0.0],
+                color: get_linear_rgb([127, 127, 127]),
+            },
+            Vertex {
+                position: [-0.5, 0.5, 0.0],
+                color: get_linear_rgb([255, 0, 0]),
+            },
+            Vertex {
+                position: [-0.5, -0.5, 0.0],
+                color: get_linear_rgb([0, 255, 0]),
+            },
+            Vertex {
+                position: [0.5, -0.5, 0.0],
+                color: get_linear_rgb([0, 0, 255]),
+            },
+        ];
+
         let vertex_buffer = device.create_buffer_init(&BufferInitDescriptor {
             label: Some("Vertex buffer"),
-            contents: bytemuck::cast_slice(VERTICES),
+            contents: bytemuck::cast_slice(vertices),
             usage: wgpu::BufferUsages::VERTEX,
+        });
+
+        let index_buffer = device.create_buffer_init(&BufferInitDescriptor {
+            label: Some("Index buffer"),
+            contents: bytemuck::cast_slice(INDICES),
+            usage: wgpu::BufferUsages::INDEX,
         });
 
         Self {
@@ -155,6 +183,7 @@ impl<'a> Display<'a> {
             config,
             render_pipeline,
             vertex_buffer,
+            index_buffer,
         }
     }
 
@@ -211,7 +240,8 @@ impl<'a> Display<'a> {
 
         render_pass.set_pipeline(&self.render_pipeline);
         render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-        render_pass.draw(0..(VERTICES.len() as u32), 0..1);
+        render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+        render_pass.draw_indexed(0..(INDICES.len() as u32), 0, 0..1);
 
         // We have to explicitly end the render pass by dropping it before calling encoder.finish().
         drop(render_pass);
@@ -251,21 +281,6 @@ impl Vertex {
     }
 }
 
-const VERTICES: &[Vertex] = &[
-    Vertex {
-        position: [0.0, 0.5, 0.0],
-        color: [1.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, 0.0],
-        color: [0.0, 1.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, 0.0],
-        color: [0.0, 0.0, 1.0],
-    },
-];
-
 pub fn create_window(event_loop: &EventLoop<()>) -> Window {
     let window = WindowBuilder::new()
         .build(event_loop)
@@ -296,9 +311,9 @@ pub fn create_window(event_loop: &EventLoop<()>) -> Window {
 /// Converts a color value from the standard srgb format (eg (0, 255, 127)) to the linear rgb format that wgpu expects.
 /// See [the Wikipedia article on sRGB](https://en.wikipedia.org/wiki/SRGB#From_sRGB_to_CIE_XYZ).
 #[must_use]
-fn get_linear_rgb(standard_rgb: [i32; 3]) -> [f64; 3] {
-    fn get_linear_color(standard_color: i32) -> f64 {
-        let normalized_standard_color = f64::from(standard_color) / 255.0;
+fn get_linear_rgb(standard_rgb: [u8; 3]) -> [f32; 3] {
+    fn get_linear_color(standard_color: u8) -> f32 {
+        let normalized_standard_color = f32::from(standard_color) / 255.0;
 
         if normalized_standard_color <= 0.04045 {
             return normalized_standard_color / 12.92;
