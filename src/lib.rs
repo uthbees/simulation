@@ -1,19 +1,17 @@
-use std::ops::Add;
-use web_time::{Duration, Instant};
-
-use cfg_if::cfg_if;
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::prelude::*;
-use winit::event::{Event, StartCause, WindowEvent};
-use winit::event_loop::{ControlFlow, EventLoop, EventLoopWindowTarget};
+mod display;
+mod ui;
+mod world;
 
 use crate::display::Display;
 use crate::ui::Ui;
 use crate::world::World;
-
-mod display;
-mod ui;
-mod world;
+use cfg_if::cfg_if;
+use std::ops::Add;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
+use web_time::{Duration, Instant};
+use winit::event::{Event, StartCause, WindowEvent};
+use winit::event_loop::{ControlFlow, EventLoop, EventLoopWindowTarget};
 
 /// Runs the application. Called by WASM directly.
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
