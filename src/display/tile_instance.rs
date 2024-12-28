@@ -38,11 +38,11 @@ impl TileInstance {
                 color: get_linear_rgb([255, 0, 0]),
             },
             TileInstance {
-                position: [-0.5, 0.0],
+                position: [-500.0, 0.0],
                 color: get_linear_rgb([0, 255, 0]),
             },
             TileInstance {
-                position: [0.5, 0.5],
+                position: [500.0, 400.0],
                 color: get_linear_rgb([0, 0, 0]),
             },
         ]

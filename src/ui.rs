@@ -1,5 +1,3 @@
-use winit::event::WindowEvent;
-
 /// Represents the UI - anything that affects what the user sees, but which is not actually part of the simulation.
 pub struct Ui {}
 
@@ -15,5 +13,5 @@ impl Ui {
         Self {}
     }
 
-    pub fn handle_input(&mut self, event: &WindowEvent) {}
+    // pub fn handle_input(&mut self, event: &WindowEvent) {}
 }
