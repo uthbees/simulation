@@ -1,10 +1,15 @@
+mod instance_buffer;
+mod tile_instance;
+
 use std::iter::once;
 
 use crate::{Ui, World};
+use instance_buffer::InstanceBuffer;
+use tile_instance::TileInstance;
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use wgpu::{
-    Buffer, BufferAddress, Device, PresentMode, Queue, RenderPipeline, Surface,
-    SurfaceConfiguration, VertexBufferLayout, VertexFormat, VertexStepMode,
+    Buffer, BufferAddress, BufferDescriptor, Device, PresentMode, Queue, RenderPipeline, Surface,
+    SurfaceConfiguration, VertexAttribute, VertexBufferLayout, VertexFormat, VertexStepMode,
 };
 use winit::dpi::PhysicalSize;
 use winit::event_loop::EventLoop;
@@ -19,9 +24,8 @@ pub struct Display<'a> {
     render_pipeline: RenderPipeline,
     vertex_buffer: Buffer,
     index_buffer: Buffer,
+    instance_buffer: InstanceBuffer,
 }
-
-const INDICES: &[u16] = &[0, 1, 2, 0, 2, 3];
 
 impl<'a> Display<'a> {
     // TODO: Break this function up.
@@ -113,7 +117,7 @@ impl<'a> Display<'a> {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vert_main",
-                buffers: &[Vertex::layout()],
+                buffers: &[Vertex::layout(), TileInstance::layout()],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             },
             fragment: Some(wgpu::FragmentState {
@@ -147,20 +151,16 @@ impl<'a> Display<'a> {
 
         let vertices: &[Vertex] = &[
             Vertex {
-                position: [0.5, 0.5, 0.0],
-                color: get_linear_rgb([127, 127, 127]),
+                position: [0.5, 0.5],
             },
             Vertex {
-                position: [-0.5, 0.5, 0.0],
-                color: get_linear_rgb([255, 0, 0]),
+                position: [-0.5, 0.5],
             },
             Vertex {
-                position: [-0.5, -0.5, 0.0],
-                color: get_linear_rgb([0, 255, 0]),
+                position: [-0.5, -0.5],
             },
             Vertex {
-                position: [0.5, -0.5, 0.0],
-                color: get_linear_rgb([0, 0, 255]),
+                position: [0.5, -0.5],
             },
         ];
 
@@ -172,9 +172,11 @@ impl<'a> Display<'a> {
 
         let index_buffer = device.create_buffer_init(&BufferInitDescriptor {
             label: Some("Index buffer"),
-            contents: bytemuck::cast_slice(INDICES),
+            contents: bytemuck::cast_slice(TILE_INDICES),
             usage: wgpu::BufferUsages::INDEX,
         });
+
+        let instance_buffer = InstanceBuffer::new(&device);
 
         Self {
             window,
@@ -185,6 +187,7 @@ impl<'a> Display<'a> {
             render_pipeline,
             vertex_buffer,
             index_buffer,
+            instance_buffer,
         }
     }
 
@@ -208,7 +211,7 @@ impl<'a> Display<'a> {
         self.surface.configure(&self.device, &self.config);
     }
 
-    pub fn render(&self, ui: &Ui, world: &World) -> Result<(), wgpu::SurfaceError> {
+    pub fn render(&mut self, ui: &Ui, world: &World) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
         let view = output
             .texture
@@ -239,10 +242,23 @@ impl<'a> Display<'a> {
             timestamp_writes: None,
         });
 
+        let tile_instances = TileInstance::vec_from_world(world);
+
+        self.instance_buffer.write_data(
+            &self.queue,
+            &self.device,
+            bytemuck::cast_slice(&tile_instances),
+        );
+
         render_pass.set_pipeline(&self.render_pipeline);
         render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+        render_pass.set_vertex_buffer(1, self.instance_buffer.buffer.slice(..));
         render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-        render_pass.draw_indexed(0..(INDICES.len() as u32), 0, 0..1);
+        render_pass.draw_indexed(
+            0..(TILE_INDICES.len() as u32),
+            0,
+            0..(tile_instances.len() as u32),
+        );
 
         // We have to explicitly end the render pass by dropping it before calling encoder.finish().
         drop(render_pass);
@@ -257,8 +273,7 @@ impl<'a> Display<'a> {
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 struct Vertex {
-    position: [f32; 3],
-    color: [f32; 3],
+    position: [f32; 2],
 }
 
 impl Vertex {
@@ -266,21 +281,16 @@ impl Vertex {
         VertexBufferLayout {
             array_stride: size_of::<Vertex>() as BufferAddress,
             step_mode: VertexStepMode::Vertex,
-            attributes: &[
-                wgpu::VertexAttribute {
-                    offset: 0,
-                    shader_location: 0,
-                    format: VertexFormat::Float32x3,
-                },
-                wgpu::VertexAttribute {
-                    offset: size_of::<[f32; 3]>() as BufferAddress,
-                    shader_location: 1,
-                    format: VertexFormat::Float32x3,
-                },
-            ],
+            attributes: &[VertexAttribute {
+                offset: 0,
+                shader_location: 0,
+                format: VertexFormat::Float32x2,
+            }],
         }
     }
 }
+
+const TILE_INDICES: &[u16] = &[0, 1, 2, 0, 2, 3];
 
 pub fn create_window(event_loop: &EventLoop<()>) -> Window {
     let window = WindowBuilder::new()
