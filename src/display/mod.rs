@@ -1,14 +1,16 @@
+mod global_uniform;
 mod instance_buffer;
 mod tile_instance;
 
 use std::iter::once;
 
-use crate::{Ui, World};
+use crate::World;
+use global_uniform::GlobalUniform;
 use instance_buffer::InstanceBuffer;
 use tile_instance::TileInstance;
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use wgpu::{
-    Buffer, BufferAddress, BufferDescriptor, Device, PresentMode, Queue, RenderPipeline, Surface,
+    Buffer, BufferAddress, Device, PresentMode, Queue, RenderPipeline, Surface,
     SurfaceConfiguration, VertexAttribute, VertexBufferLayout, VertexFormat, VertexStepMode,
 };
 use winit::dpi::PhysicalSize;
@@ -25,6 +27,7 @@ pub struct Display<'a> {
     vertex_buffer: Buffer,
     index_buffer: Buffer,
     instance_buffer: InstanceBuffer,
+    global_uniform: GlobalUniform,
 }
 
 impl<'a> Display<'a> {
@@ -103,11 +106,19 @@ impl<'a> Display<'a> {
         // Initialize the surface. Doing this in the constructor is necessary for WASM and decreases the startup time for desktop.
         surface.configure(&device, &config);
 
+        let global_uniform = GlobalUniform::new(
+            &device,
+            global_uniform::Data {
+                #[expect(clippy::cast_precision_loss)]
+                window_size_px: [config.width as f32, config.height as f32],
+            },
+        );
+
         let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render pipeline layout"),
-                bind_group_layouts: &[],
+                bind_group_layouts: &[&global_uniform.bind_group_layout],
                 push_constant_ranges: &[],
             });
 
@@ -151,16 +162,16 @@ impl<'a> Display<'a> {
 
         let vertices: &[Vertex] = &[
             Vertex {
-                position: [0.5, 0.5],
+                position: [50.0, 50.0],
             },
             Vertex {
-                position: [-0.5, 0.5],
+                position: [-50.0, 50.0],
             },
             Vertex {
-                position: [-0.5, -0.5],
+                position: [-50.0, -50.0],
             },
             Vertex {
-                position: [0.5, -0.5],
+                position: [50.0, -50.0],
             },
         ];
 
@@ -188,6 +199,7 @@ impl<'a> Display<'a> {
             vertex_buffer,
             index_buffer,
             instance_buffer,
+            global_uniform,
         }
     }
 
@@ -204,6 +216,13 @@ impl<'a> Display<'a> {
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.configure_surface();
+            self.global_uniform.update(
+                &self.queue,
+                global_uniform::Data {
+                    #[expect(clippy::cast_precision_loss)]
+                    window_size_px: [new_size.width as f32, new_size.height as f32],
+                },
+            );
         }
     }
 
@@ -211,7 +230,7 @@ impl<'a> Display<'a> {
         self.surface.configure(&self.device, &self.config);
     }
 
-    pub fn render(&mut self, ui: &Ui, world: &World) -> Result<(), wgpu::SurfaceError> {
+    pub fn render(&mut self, world: &World) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
         let view = output
             .texture
@@ -251,6 +270,7 @@ impl<'a> Display<'a> {
         );
 
         render_pass.set_pipeline(&self.render_pipeline);
+        render_pass.set_bind_group(0, &self.global_uniform.bind_group, &[]);
         render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
         render_pass.set_vertex_buffer(1, self.instance_buffer.buffer.slice(..));
         render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);

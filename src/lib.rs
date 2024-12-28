@@ -26,6 +26,7 @@ pub async fn run() {
     let mut app_state = App {
         display: Display::new(&window).await,
         next_frame_start_time: Instant::now(),
+        #[expect(clippy::needless_update)]
         ui: Ui {
             ..Default::default()
         },
@@ -44,6 +45,7 @@ pub async fn run() {
 struct App<'a> {
     display: Display<'a>,
     next_frame_start_time: Instant,
+    #[expect(dead_code)]
     ui: Ui,
     world: World,
 }
@@ -57,8 +59,8 @@ fn handle_winit_event(
     let App {
         ref mut display,
         ref mut next_frame_start_time,
-        ref mut ui,
         ref mut world,
+        ..
     } = app_state;
 
     match *event {
@@ -66,7 +68,7 @@ fn handle_winit_event(
             event: WindowEvent::RedrawRequested,
             ..
         } => {
-            match display.render(ui, world) {
+            match display.render(world) {
                 Ok(()) => {}
                 // Reconfigure the surface if lost.
                 Err(wgpu::SurfaceError::Lost) => display.configure_surface(),
