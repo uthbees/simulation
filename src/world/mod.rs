@@ -1,6 +1,6 @@
-use crate::world::tile::Tile;
-
 mod tile;
+
+use crate::world::tile::Tile;
 
 /// Represents the simulation world.
 pub struct World {

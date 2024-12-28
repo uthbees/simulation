@@ -2,11 +2,10 @@ mod global_uniform;
 mod instance_buffer;
 mod tile_instance;
 
-use std::iter::once;
-
 use crate::World;
 use global_uniform::GlobalUniform;
 use instance_buffer::InstanceBuffer;
+use std::iter::once;
 use tile_instance::TileInstance;
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use wgpu::{
