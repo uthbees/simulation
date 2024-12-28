@@ -83,7 +83,13 @@ fn handle_winit_event(
         Event::WindowEvent {
             event: WindowEvent::CloseRequested,
             ..
-        } => control_flow.exit(),
+        } => {
+            control_flow.exit();
+            // It might take up to a few seconds to clean up, so we'll hide the window now. This makes
+            // it appear as though everything quits instantly, even though the process might hang around
+            // for a few more seconds.
+            display.window().set_visible(false);
+        }
         Event::NewEvents(cause)
             if cause == StartCause::Poll && Instant::now() >= *next_frame_start_time =>
         {
