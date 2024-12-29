@@ -2,6 +2,7 @@ use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use wgpu::{BufferSize, Device};
 
 pub struct GlobalUniform {
+    data: Data,
     buffer: wgpu::Buffer,
     pub bind_group: wgpu::BindGroup,
     pub bind_group_layout: wgpu::BindGroupLayout,
@@ -39,13 +40,16 @@ impl GlobalUniform {
         });
 
         GlobalUniform {
+            data,
             buffer,
             bind_group,
             bind_group_layout,
         }
     }
 
-    pub fn update(&mut self, queue: &wgpu::Queue, data: Data) {
+    pub fn write_data(&mut self, queue: &wgpu::Queue, data: Data) {
+        self.data = data;
+
         let data = [data];
         let raw_data: &[u8] = bytemuck::cast_slice(&data);
 
@@ -56,8 +60,12 @@ impl GlobalUniform {
                 BufferSize::try_from(raw_data.len() as u64)
                     .expect("the global uniform should contain data"),
             )
-            .expect("the buffer should have enough space for the data");
+            .expect("the global uniform buffer should have enough space for its data");
         staging_buffer.copy_from_slice(raw_data);
+    }
+
+    pub fn data(&self) -> &Data {
+        &self.data
     }
 }
 
@@ -65,4 +73,5 @@ impl GlobalUniform {
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Data {
     pub window_size_px: [f32; 2],
+    pub camera_pos: [f32; 2],
 }

@@ -2,7 +2,8 @@ mod global_uniform;
 mod instance_buffer;
 mod tile_instance;
 
-use crate::World;
+use crate::ui::Ui;
+use crate::world::World;
 use global_uniform::GlobalUniform;
 use instance_buffer::InstanceBuffer;
 use std::iter::once;
@@ -110,6 +111,8 @@ impl<'a> Display<'a> {
             global_uniform::Data {
                 #[expect(clippy::cast_precision_loss)]
                 window_size_px: [config.width as f32, config.height as f32],
+                // Just initialize to something - this stuff should be overwritten before it's used.
+                camera_pos: [0.0, 0.0],
             },
         );
 
@@ -215,11 +218,12 @@ impl<'a> Display<'a> {
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.configure_surface();
-            self.global_uniform.update(
+            self.global_uniform.write_data(
                 &self.queue,
                 global_uniform::Data {
                     #[expect(clippy::cast_precision_loss)]
                     window_size_px: [new_size.width as f32, new_size.height as f32],
+                    ..*self.global_uniform.data()
                 },
             );
         }
@@ -229,7 +233,7 @@ impl<'a> Display<'a> {
         self.surface.configure(&self.device, &self.config);
     }
 
-    pub fn render(&mut self, world: &World) -> Result<(), wgpu::SurfaceError> {
+    pub fn render(&mut self, ui: &Ui, world: &World) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
         let view = output
             .texture
@@ -266,6 +270,14 @@ impl<'a> Display<'a> {
             &self.queue,
             &self.device,
             bytemuck::cast_slice(&tile_instances),
+        );
+
+        self.global_uniform.write_data(
+            &self.queue,
+            global_uniform::Data {
+                camera_pos: [ui.camera_pos.x as f32, ui.camera_pos.y as f32],
+                ..*self.global_uniform.data()
+            },
         );
 
         render_pass.set_pipeline(&self.render_pipeline);

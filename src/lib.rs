@@ -24,13 +24,8 @@ pub async fn run() {
     let mut app_state = App {
         display: Display::new(&window).await,
         next_frame_start_time: Instant::now(),
-        #[expect(clippy::needless_update)]
-        ui: Ui {
-            ..Default::default()
-        },
-        world: World {
-            ..Default::default()
-        },
+        ui: Ui::new(),
+        world: World::new(),
     };
 
     // TODO: Use EventLoopExtWebSys::spawn() instead of run() on web to avoid the JS exception trick.
@@ -43,7 +38,6 @@ pub async fn run() {
 struct App<'a> {
     display: Display<'a>,
     next_frame_start_time: Instant,
-    #[expect(dead_code)]
     ui: Ui,
     world: World,
 }
@@ -57,16 +51,16 @@ fn handle_winit_event(
     let App {
         ref mut display,
         ref mut next_frame_start_time,
+        ref mut ui,
         ref mut world,
-        ..
     } = app_state;
 
-    match *event {
+    match event {
         Event::WindowEvent {
             event: WindowEvent::RedrawRequested,
             ..
         } => {
-            match display.render(world) {
+            match display.render(ui, world) {
                 Ok(()) => {}
                 // Reconfigure the surface if lost.
                 Err(wgpu::SurfaceError::Lost) => display.configure_surface(),
@@ -79,7 +73,7 @@ fn handle_winit_event(
         Event::WindowEvent {
             event: WindowEvent::Resized(physical_size),
             ..
-        } => display.resize(physical_size),
+        } => display.resize(*physical_size),
         Event::WindowEvent {
             event: WindowEvent::CloseRequested,
             ..
@@ -90,9 +84,14 @@ fn handle_winit_event(
             // for a few more seconds.
             display.window().set_visible(false);
         }
+        Event::WindowEvent {
+            event: WindowEvent::KeyboardInput { event, .. },
+            ..
+        } => ui.handle_input(event),
         Event::NewEvents(cause)
-            if cause == StartCause::Poll && Instant::now() >= *next_frame_start_time =>
+            if *cause == StartCause::Poll && Instant::now() >= *next_frame_start_time =>
         {
+            ui.tick();
             world.tick();
 
             display.window().request_redraw();
@@ -132,4 +131,10 @@ pub fn init_logging() {
             env_logger::init();
         }
     }
+}
+
+pub struct Position {
+    // Note that fixed-point decimal numbers would be more efficient (they would just take a little more effort).
+    pub x: f64,
+    pub y: f64,
 }
