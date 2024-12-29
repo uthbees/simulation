@@ -1,5 +1,6 @@
 mod tile;
 
+use crate::Position;
 use tile::Tile;
 
 /// Represents the simulation world.
@@ -11,12 +12,6 @@ pub struct World {
 pub struct TileState {
     pub tile: Tile,
     pub pos: Position,
-}
-
-impl Default for World {
-    fn default() -> Self {
-        Self::new()
-    }
 }
 
 impl World {
@@ -41,10 +36,4 @@ impl World {
     }
 
     pub fn tick(&mut self) {}
-}
-
-pub struct Position {
-    // Note that fixed-point decimal numbers would be more efficient
-    pub x: f64,
-    pub y: f64,
 }

@@ -1,5 +1,6 @@
 struct GlobalUniform {
-    window_size_px: vec2<f32>
+    window_size_px: vec2<f32>,
+    camera_pos: vec2<f32>,
 };
 
 @group(0) @binding(0)
@@ -27,7 +28,7 @@ fn vert_main(
     var out: VertexOutput;
     out.color = instance.color;
 
-    var xy: vec2<f32> = instance.position.xy + model.position.xy;
+    var xy: vec2<f32> = instance.position.xy + model.position.xy - global_uniform.camera_pos.xy;
 
     // Convert from pixel coordinates to normalized coordinates (-1 to 1).
     xy.x = xy.x / global_uniform.window_size_px.x * 2;
