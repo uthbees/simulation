@@ -111,8 +111,8 @@ impl<'a> Display<'a> {
             global_uniform::Data {
                 #[expect(clippy::cast_precision_loss)]
                 window_size_px: [config.width as f32, config.height as f32],
-                // Just initialize to something - this stuff should be overwritten before it's used.
-                camera_pos: [0.0, 0.0],
+                // Just initialize to something - everything else should be overwritten before it's used.
+                ..Default::default()
             },
         );
 
@@ -275,7 +275,8 @@ impl<'a> Display<'a> {
         self.global_uniform.write_data(
             &self.queue,
             global_uniform::Data {
-                camera_pos: [ui.camera_pos.x as f32, ui.camera_pos.y as f32],
+                camera_pos: [ui.camera.pos.x as f32, ui.camera.pos.y as f32],
+                camera_zoom: ui.camera.zoom_multiplier(),
                 ..*self.global_uniform.data()
             },
         );

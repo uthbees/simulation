@@ -56,38 +56,30 @@ fn handle_winit_event(
     } = app_state;
 
     match event {
-        Event::WindowEvent {
-            event: WindowEvent::RedrawRequested,
-            ..
-        } => {
-            match display.render(ui, world) {
-                Ok(()) => {}
-                // Reconfigure the surface if lost.
-                Err(wgpu::SurfaceError::Lost) => display.configure_surface(),
-                // If the system is out of memory, we should probably quit.
-                Err(wgpu::SurfaceError::OutOfMemory) => control_flow.exit(),
-                // The other errors (Outdated, Timeout) should be resolved by the next frame.
-                Err(error) => eprintln!("{error:?}"),
+        Event::WindowEvent { event, .. } => {
+            match event {
+                WindowEvent::RedrawRequested => match display.render(ui, world) {
+                    Ok(()) => {}
+                    // Reconfigure the surface if lost.
+                    Err(wgpu::SurfaceError::Lost) => display.configure_surface(),
+                    // If the system is out of memory, we should probably quit.
+                    Err(wgpu::SurfaceError::OutOfMemory) => control_flow.exit(),
+                    // The other errors (Outdated, Timeout) should be resolved by the next frame.
+                    Err(error) => eprintln!("{error:?}"),
+                },
+                WindowEvent::Resized(physical_size) => display.resize(*physical_size),
+                WindowEvent::CloseRequested => {
+                    control_flow.exit();
+                    // It might take up to a few seconds to clean up, so we'll hide the window now. This makes
+                    // it appear as though everything quits instantly, even though the process might hang around
+                    // for a few more seconds.
+                    display.window().set_visible(false);
+                }
+                WindowEvent::KeyboardInput { event, .. } => ui.handle_key_event(event),
+                WindowEvent::MouseWheel { delta, .. } => ui.handle_scroll_event(delta),
+                _ => {}
             }
         }
-        Event::WindowEvent {
-            event: WindowEvent::Resized(physical_size),
-            ..
-        } => display.resize(*physical_size),
-        Event::WindowEvent {
-            event: WindowEvent::CloseRequested,
-            ..
-        } => {
-            control_flow.exit();
-            // It might take up to a few seconds to clean up, so we'll hide the window now. This makes
-            // it appear as though everything quits instantly, even though the process might hang around
-            // for a few more seconds.
-            display.window().set_visible(false);
-        }
-        Event::WindowEvent {
-            event: WindowEvent::KeyboardInput { event, .. },
-            ..
-        } => ui.handle_input(event),
         Event::NewEvents(cause)
             if *cause == StartCause::Poll && Instant::now() >= *next_frame_start_time =>
         {
@@ -133,6 +125,7 @@ pub fn init_logging() {
     }
 }
 
+#[derive(Default)]
 pub struct Position {
     // Note that fixed-point decimal numbers would be more efficient (they would just take a little more effort).
     pub x: f64,

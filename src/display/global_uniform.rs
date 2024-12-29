@@ -74,4 +74,18 @@ impl GlobalUniform {
 pub struct Data {
     pub window_size_px: [f32; 2],
     pub camera_pos: [f32; 2],
+    pub camera_zoom: f32,
+    // We need to pad the struct so that it takes a multiple of 8 bits.
+    pub padding: f32,
+}
+
+impl Default for Data {
+    fn default() -> Self {
+        Data {
+            window_size_px: [1.0, 1.0],
+            camera_pos: [0.0, 0.0],
+            camera_zoom: 1.0,
+            padding: 0.0,
+        }
+    }
 }
