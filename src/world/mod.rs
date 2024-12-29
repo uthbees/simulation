@@ -10,8 +10,7 @@ pub struct World {
 // temporary
 pub struct TileState {
     pub tile: Tile,
-    pub x: i32,
-    pub y: i32,
+    pub pos: Position,
 }
 
 impl Default for World {
@@ -27,22 +26,25 @@ impl World {
             tiles: vec![
                 TileState {
                     tile: Tile::Grass,
-                    x: 0,
-                    y: 0,
+                    pos: Position { x: 0.0, y: 0.0 },
                 },
                 TileState {
                     tile: Tile::Red,
-                    x: -500,
-                    y: 0,
+                    pos: Position { x: -500.0, y: 0.0 },
                 },
                 TileState {
                     tile: Tile::White,
-                    x: 500,
-                    y: 400,
+                    pos: Position { x: 500.0, y: 400.0 },
                 },
             ],
         }
     }
 
     pub fn tick(&mut self) {}
+}
+
+pub struct Position {
+    // Note that fixed-point decimal numbers would be more efficient
+    pub x: f64,
+    pub y: f64,
 }
