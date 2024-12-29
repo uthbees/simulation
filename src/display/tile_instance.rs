@@ -32,19 +32,14 @@ impl TileInstance {
     }
 
     pub fn vec_from_world(world: &World) -> Vec<TileInstance> {
-        vec![
-            TileInstance {
-                position: [0.0, 0.0],
-                color: get_linear_rgb([255, 0, 0]),
-            },
-            TileInstance {
-                position: [-500.0, 0.0],
-                color: get_linear_rgb([0, 255, 0]),
-            },
-            TileInstance {
-                position: [500.0, 400.0],
-                color: get_linear_rgb([0, 0, 0]),
-            },
-        ]
+        world
+            .tiles
+            .iter()
+            .map(|tile| TileInstance {
+                #[expect(clippy::cast_precision_loss)]
+                position: [tile.x as f32, tile.y as f32],
+                color: get_linear_rgb(tile.tile.color()),
+            })
+            .collect()
     }
 }
