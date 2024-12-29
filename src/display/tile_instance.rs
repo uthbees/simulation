@@ -36,8 +36,7 @@ impl TileInstance {
             .tiles
             .iter()
             .map(|tile| TileInstance {
-                #[expect(clippy::cast_precision_loss)]
-                position: [tile.x as f32, tile.y as f32],
+                position: [tile.pos.x as f32, tile.pos.y as f32],
                 color: get_linear_rgb(tile.tile.color()),
             })
             .collect()
