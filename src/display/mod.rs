@@ -1,13 +1,14 @@
 mod global_uniform;
 mod instance_buffer;
-mod tile_instance;
+mod tile_render_instance;
 
+use crate::display::global_uniform::GlobalUniformData;
 use crate::ui::Ui;
 use crate::world::World;
 use global_uniform::GlobalUniform;
 use instance_buffer::InstanceBuffer;
 use std::iter::once;
-use tile_instance::TileInstance;
+use tile_render_instance::TileRenderInstance;
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use wgpu::{
     Buffer, BufferAddress, Device, PresentMode, Queue, RenderPipeline, Surface,
@@ -108,8 +109,7 @@ impl<'a> Display<'a> {
 
         let global_uniform = GlobalUniform::new(
             &device,
-            global_uniform::Data {
-                #[expect(clippy::cast_precision_loss)]
+            GlobalUniformData {
                 window_size_px: [config.width as f32, config.height as f32],
                 // Just initialize to something - everything else should be overwritten before it's used.
                 ..Default::default()
@@ -130,7 +130,7 @@ impl<'a> Display<'a> {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vert_main",
-                buffers: &[Vertex::layout(), TileInstance::layout()],
+                buffers: &[Vertex::layout(), TileRenderInstance::layout()],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             },
             fragment: Some(wgpu::FragmentState {
@@ -164,16 +164,16 @@ impl<'a> Display<'a> {
 
         let vertices: &[Vertex] = &[
             Vertex {
-                position: [50.0, 50.0],
+                position: [128.0, 128.0],
             },
             Vertex {
-                position: [-50.0, 50.0],
+                position: [0.0, 128.0],
             },
             Vertex {
-                position: [-50.0, -50.0],
+                position: [0.0, 0.0],
             },
             Vertex {
-                position: [50.0, -50.0],
+                position: [128.0, 0.0],
             },
         ];
 
@@ -220,8 +220,7 @@ impl<'a> Display<'a> {
             self.configure_surface();
             self.global_uniform.write_data(
                 &self.queue,
-                global_uniform::Data {
-                    #[expect(clippy::cast_precision_loss)]
+                GlobalUniformData {
                     window_size_px: [new_size.width as f32, new_size.height as f32],
                     ..*self.global_uniform.data()
                 },
@@ -264,7 +263,7 @@ impl<'a> Display<'a> {
             timestamp_writes: None,
         });
 
-        let tile_instances = TileInstance::vec_from_world(world);
+        let tile_instances = TileRenderInstance::vec_from_world(world);
 
         self.instance_buffer.write_data(
             &self.queue,
@@ -274,7 +273,7 @@ impl<'a> Display<'a> {
 
         self.global_uniform.write_data(
             &self.queue,
-            global_uniform::Data {
+            GlobalUniformData {
                 camera_pos: [ui.camera.pos.x as f32, ui.camera.pos.y as f32],
                 camera_zoom: ui.camera.zoom_multiplier(),
                 ..*self.global_uniform.data()

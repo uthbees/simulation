@@ -18,4 +18,15 @@ impl Tile {
             Tile::White => [255, 255, 255],
         }
     }
+
+    /// The size of a side of a tile in pixels at 1x zoom.
+    pub const fn width_px() -> i32 {
+        128
+    }
+}
+
+impl Default for Tile {
+    fn default() -> Self {
+        Tile::Black
+    }
 }

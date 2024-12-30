@@ -42,7 +42,6 @@ impl Camera {
     pub fn zoom_multiplier(&self) -> f32 {
         // Round the zoom level so that zooming happens in increments instead of continuously.
         let clipped_zoom_level = self.zoom_level as i32;
-        #[expect(clippy::cast_precision_loss)]
         CAMERA_ZOOM_LEVEL_MULTIPLIER.powf(clipped_zoom_level as f32)
     }
 
@@ -120,5 +119,5 @@ pub enum PrimaryDirection {
 const CAMERA_SPEED_PX: f64 = 10.0;
 /// The amount each zoom increment zooms in/out.
 const CAMERA_ZOOM_LEVEL_MULTIPLIER: f32 = 1.15;
-const CAMERA_MAX_ZOOM_LEVEL: f32 = 20.0;
+const CAMERA_MAX_ZOOM_LEVEL: f32 = 5.0;
 const CAMERA_MIN_ZOOM_LEVEL: f32 = -20.0;
