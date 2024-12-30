@@ -2,14 +2,14 @@ use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use wgpu::{BufferSize, Device};
 
 pub struct GlobalUniform {
-    data: Data,
+    data: GlobalUniformData,
     buffer: wgpu::Buffer,
     pub bind_group: wgpu::BindGroup,
     pub bind_group_layout: wgpu::BindGroupLayout,
 }
 
 impl GlobalUniform {
-    pub fn new(device: &Device, data: Data) -> Self {
+    pub fn new(device: &Device, data: GlobalUniformData) -> Self {
         let buffer = device.create_buffer_init(&BufferInitDescriptor {
             label: Some("Global uniform buffer"),
             contents: bytemuck::cast_slice(&[data]),
@@ -47,7 +47,7 @@ impl GlobalUniform {
         }
     }
 
-    pub fn write_data(&mut self, queue: &wgpu::Queue, data: Data) {
+    pub fn write_data(&mut self, queue: &wgpu::Queue, data: GlobalUniformData) {
         self.data = data;
 
         let data = [data];
@@ -64,14 +64,14 @@ impl GlobalUniform {
         staging_buffer.copy_from_slice(raw_data);
     }
 
-    pub fn data(&self) -> &Data {
+    pub fn data(&self) -> &GlobalUniformData {
         &self.data
     }
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct Data {
+pub struct GlobalUniformData {
     pub window_size_px: [f32; 2],
     pub camera_pos: [f32; 2],
     pub camera_zoom: f32,
@@ -79,9 +79,9 @@ pub struct Data {
     pub padding: [f32; 3],
 }
 
-impl Default for Data {
+impl Default for GlobalUniformData {
     fn default() -> Self {
-        Data {
+        GlobalUniformData {
             window_size_px: [1.0, 1.0],
             camera_pos: [0.0, 0.0],
             camera_zoom: 1.0,
