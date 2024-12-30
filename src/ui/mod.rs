@@ -1,4 +1,8 @@
-use crate::Position;
+mod camera;
+
+use crate::ui::camera::Camera;
+use camera::{MoveDirection, PrimaryDirection};
+use std::collections::HashSet;
 use winit::event::{ElementState, KeyEvent, MouseScrollDelta};
 use winit::keyboard::{KeyCode, PhysicalKey};
 
@@ -12,9 +16,7 @@ impl Ui {
     #[must_use]
     pub fn new() -> Self {
         Self {
-            camera: Camera {
-                ..Default::default()
-            },
+            camera: Camera::new(),
             held_inputs: Inputs {
                 ..Default::default()
             },
@@ -52,91 +54,36 @@ impl Ui {
     }
 
     pub fn handle_scroll_event(&mut self, delta: &MouseScrollDelta) {
-        match delta {
-            MouseScrollDelta::LineDelta(_, lines) => self.camera.zoom(*lines),
-            _ => {}
+        if let MouseScrollDelta::LineDelta(_, lines) = delta {
+            self.camera.zoom(*lines);
         }
     }
 
     // Note: Will accept World in the future (if any interaction with the simulation is added).
     pub fn tick(&mut self) {
-        let mut camera_move_direction: Option<Direction> = None;
+        self.move_camera();
+    }
+
+    fn move_camera(&mut self) {
+        let mut move_directions = HashSet::new();
 
         if self.held_inputs.up == KeyState::Pressed {
-            camera_move_direction = Some(Direction::North);
-        } else if self.held_inputs.down == KeyState::Pressed {
-            camera_move_direction = Some(Direction::South);
-        } else if self.held_inputs.left == KeyState::Pressed {
-            camera_move_direction = Some(Direction::West);
-        } else if self.held_inputs.right == KeyState::Pressed {
-            camera_move_direction = Some(Direction::East);
+            move_directions.insert(PrimaryDirection::North);
+        }
+        if self.held_inputs.down == KeyState::Pressed {
+            move_directions.insert(PrimaryDirection::South);
+        }
+        if self.held_inputs.left == KeyState::Pressed {
+            move_directions.insert(PrimaryDirection::West);
+        }
+        if self.held_inputs.right == KeyState::Pressed {
+            move_directions.insert(PrimaryDirection::East);
         }
 
-        if let Some(direction) = camera_move_direction {
-            self.camera.pan(&direction);
-        }
+        self.camera
+            .pan(&MoveDirection::from_primary_directions(move_directions));
     }
 }
-
-#[derive(Default)]
-pub struct Camera {
-    pub pos: Position,
-    /// Note that the zoom level can be a decimal value, but only the value before the decimal place
-    /// is used when determining zoom multiplier.
-    zoom_level: f32,
-}
-
-impl Camera {
-    fn pan(&mut self, direction: &Direction) {
-        let speed = CAMERA_SPEED_PX / f64::from(self.zoom_multiplier());
-
-        match direction {
-            Direction::North => {
-                self.pos.y += speed;
-            }
-            Direction::East => {
-                self.pos.x += speed;
-            }
-            Direction::South => {
-                self.pos.y -= speed;
-            }
-            Direction::West => {
-                self.pos.x -= speed;
-            }
-        }
-    }
-
-    /// The amount that the camera is currently zoomed by. Positive values denote zooming in and vice versa.
-    ///
-    /// For example, a value of 2 would indicate that everything looks twice as big as normal.
-    pub fn zoom_multiplier(&self) -> f32 {
-        // Round the zoom level so that zooming happens in increments instead of continuously.
-        let clipped_zoom_level = self.zoom_level as i32;
-        #[expect(clippy::cast_precision_loss)]
-        CAMERA_ZOOM_LEVEL_MULTIPLIER.powf(clipped_zoom_level as f32)
-    }
-
-    fn zoom(&mut self, lines: f32) {
-        self.zoom_level += lines;
-        self.zoom_level = self
-            .zoom_level
-            .clamp(CAMERA_MIN_ZOOM_LEVEL, CAMERA_MAX_ZOOM_LEVEL);
-    }
-}
-
-enum Direction {
-    North,
-    East,
-    South,
-    West,
-}
-
-/// The single-axis speed of the camera when moving, in pixels of the window per tick.
-const CAMERA_SPEED_PX: f64 = 10.0;
-/// The amount each zoom increment zooms in/out.
-const CAMERA_ZOOM_LEVEL_MULTIPLIER: f32 = 1.15;
-const CAMERA_MAX_ZOOM_LEVEL: f32 = 25.0;
-const CAMERA_MIN_ZOOM_LEVEL: f32 = -25.0;
 
 #[derive(Default)]
 struct Inputs {
