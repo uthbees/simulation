@@ -15,26 +15,18 @@ pub struct World {
 impl World {
     #[must_use]
     pub fn new() -> Self {
-        let mut world = World {
+        World {
             ..Default::default()
-        };
-
-        // TODO: Generate terrain automatically as the camera comes near
-        world.generate_chunk(ChunkPosition { x: 0, y: 0 });
-
-        world
+        }
     }
 
     pub fn generate_chunk(&mut self, chunk_pos: ChunkPosition) {
-        let mut chunk = Chunk {
-            ..Default::default()
-        };
+        // Don't do anything if the chunk is already generated.
+        if self.chunks.contains_key(&chunk_pos) {
+            return;
+        }
 
-        chunk.tiles[0][0] = Tile::Grass;
-        chunk.tiles[2][3] = Tile::Red;
-        chunk.tiles[3][2] = Tile::White;
-        chunk.tiles[4][3] = Tile::Blue;
-
+        let chunk = Chunk::generate(&chunk_pos);
         self.chunks.insert(chunk_pos, chunk);
     }
 

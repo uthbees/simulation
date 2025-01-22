@@ -83,7 +83,7 @@ fn handle_winit_event(
         Event::NewEvents(cause)
             if *cause == StartCause::Poll && Instant::now() >= *next_frame_start_time =>
         {
-            ui.tick();
+            ui.tick(world);
             world.tick();
 
             display.window().request_redraw();
@@ -125,9 +125,9 @@ pub fn init_logging() {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Position {
-    // Note that fixed-point decimal numbers would be more efficient (they would just take a little more effort).
+    // Note that fixed-point decimal numbers would be more efficient (they would just take more effort).
     pub x: f64,
     pub y: f64,
 }

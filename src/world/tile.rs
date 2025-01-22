@@ -7,6 +7,7 @@ pub enum Tile {
     White,
 }
 
+/// A world tile. Tiles are rendered centered on their position.
 impl Tile {
     pub fn color(&self) -> [u8; 3] {
         match self {
