@@ -20,26 +20,22 @@ impl World {
         };
 
         // TODO: Generate terrain automatically as the camera comes near
-        let pos_0_0 = ChunkPosition { x: 0, y: 0 };
-
-        world.chunks.insert(
-            pos_0_0.clone(),
-            Chunk {
-                ..Default::default()
-            },
-        );
-
-        let chunk_0_0 = world
-            .chunks
-            .get_mut(&pos_0_0)
-            .expect("chunk should have just been inserted");
-
-        chunk_0_0.tiles[0][0] = Tile::Grass;
-        chunk_0_0.tiles[2][3] = Tile::Red;
-        chunk_0_0.tiles[3][2] = Tile::White;
-        chunk_0_0.tiles[4][3] = Tile::Blue;
+        world.generate_chunk(ChunkPosition { x: 0, y: 0 });
 
         world
+    }
+
+    pub fn generate_chunk(&mut self, chunk_pos: ChunkPosition) {
+        let mut chunk = Chunk {
+            ..Default::default()
+        };
+
+        chunk.tiles[0][0] = Tile::Grass;
+        chunk.tiles[2][3] = Tile::Red;
+        chunk.tiles[3][2] = Tile::White;
+        chunk.tiles[4][3] = Tile::Blue;
+
+        self.chunks.insert(chunk_pos, chunk);
     }
 
     pub fn tick(&mut self) {}
