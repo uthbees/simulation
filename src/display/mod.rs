@@ -263,7 +263,13 @@ impl<'a> Display<'a> {
             timestamp_writes: None,
         });
 
-        let tile_instances = TileRenderInstance::vec_from_world(world);
+        let tile_instances = TileRenderInstance::vec_from_world(
+            world,
+            &ui.camera.pos,
+            self.config.width as i32,
+            self.config.height as i32,
+            ui.camera.zoom_multiplier(),
+        );
 
         self.instance_buffer.write_data(
             &self.queue,

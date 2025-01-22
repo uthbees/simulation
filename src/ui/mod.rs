@@ -1,6 +1,7 @@
 mod camera;
 
 use crate::ui::camera::Camera;
+use crate::world::{ChunkPosition, World};
 use camera::{MoveDirection, PrimaryDirection};
 use std::collections::HashSet;
 use winit::event::{ElementState, KeyEvent, MouseScrollDelta};
@@ -59,9 +60,9 @@ impl Ui {
         }
     }
 
-    // Note: Will accept World in the future (if any interaction with the simulation is added).
-    pub fn tick(&mut self) {
+    pub fn tick(&mut self, world: &mut World) {
         self.move_camera();
+        self.gen_chunks_around_camera(world);
     }
 
     fn move_camera(&mut self) {
@@ -82,6 +83,29 @@ impl Ui {
 
         self.camera
             .pan(&MoveDirection::from_primary_directions(move_directions));
+    }
+
+    /// Generate chunks in a radius around the camera.
+    fn gen_chunks_around_camera(&self, world: &mut World) {
+        const CHUNK_GENERATION_RADIUS: i32 = 10;
+
+        let center_chunk_pos = ChunkPosition::from_world_coords(&self.camera.pos);
+
+        for x_chunk_pos in center_chunk_pos.x - CHUNK_GENERATION_RADIUS
+            ..center_chunk_pos.x + CHUNK_GENERATION_RADIUS
+        {
+            for y_chunk_pos in center_chunk_pos.y - CHUNK_GENERATION_RADIUS
+                ..center_chunk_pos.y + CHUNK_GENERATION_RADIUS
+            {
+                // TODO: Optimize :(
+                // Only generate chunks when the camera moves, and skip chunks that would have been
+                // in the radius of the old camera position.
+                world.generate_chunk(ChunkPosition {
+                    x: x_chunk_pos,
+                    y: y_chunk_pos,
+                });
+            }
+        }
     }
 }
 
