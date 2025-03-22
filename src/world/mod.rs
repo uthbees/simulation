@@ -1,7 +1,8 @@
 mod chunk;
 mod tile;
 
-pub use chunk::{Chunk, ChunkPosition};
+use crate::position::IntChunkCoordinates;
+pub use chunk::Chunk;
 use std::collections::HashMap;
 use std::default::Default;
 pub use tile::Tile;
@@ -9,7 +10,7 @@ pub use tile::Tile;
 /// Represents the simulation world.
 #[derive(Default)]
 pub struct World {
-    pub chunks: HashMap<ChunkPosition, Chunk>,
+    pub chunks: HashMap<IntChunkCoordinates, Chunk>,
 }
 
 impl World {
@@ -20,13 +21,13 @@ impl World {
         }
     }
 
-    pub fn generate_chunk(&mut self, chunk_pos: ChunkPosition) {
+    pub fn generate_chunk(&mut self, chunk_pos: IntChunkCoordinates) {
         // Don't do anything if the chunk is already generated.
         if self.chunks.contains_key(&chunk_pos) {
             return;
         }
 
-        let chunk = Chunk::generate(&chunk_pos);
+        let chunk = Chunk::generate(chunk_pos);
         self.chunks.insert(chunk_pos, chunk);
     }
 

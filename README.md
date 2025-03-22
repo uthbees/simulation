@@ -1,4 +1,4 @@
-Note: This project is incomplete and doesn't really work in its current state. (This was a "learn Rust" project as much as it was an attempt to port the original to a language that easily supports WASM.)
+Note: This project is incomplete. (This was a "learn Rust" project as much as it was an attempt to port the original to a language that easily supports WASM.)
 
 ### Setting up
 

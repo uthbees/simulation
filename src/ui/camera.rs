@@ -1,4 +1,4 @@
-use crate::Position;
+use crate::position::{Position, PositionMode};
 use std::collections::HashSet;
 
 #[derive(Default)]
@@ -21,18 +21,19 @@ impl Camera {
         let speed = CAMERA_SPEED_PX / f64::from(self.zoom_multiplier());
 
         let primary_directions = direction.to_primary_directions();
+        let pos = &mut self.pos;
 
         if primary_directions.contains(&&PrimaryDirection::North) {
-            self.pos.y += speed;
+            pos.set_y(pos.y(PositionMode::Pixels) + speed, PositionMode::Pixels);
         }
         if primary_directions.contains(&&PrimaryDirection::East) {
-            self.pos.x += speed;
+            pos.set_x(pos.x(PositionMode::Pixels) + speed, PositionMode::Pixels);
         }
         if primary_directions.contains(&&PrimaryDirection::South) {
-            self.pos.y -= speed;
+            pos.set_y(pos.y(PositionMode::Pixels) - speed, PositionMode::Pixels);
         }
         if primary_directions.contains(&&PrimaryDirection::West) {
-            self.pos.x -= speed;
+            pos.set_x(pos.x(PositionMode::Pixels) - speed, PositionMode::Pixels);
         }
     }
 

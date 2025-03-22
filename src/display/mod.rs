@@ -3,6 +3,7 @@ mod instance_buffer;
 mod tile_render_instance;
 
 use crate::display::global_uniform::GlobalUniformData;
+use crate::position::PositionMode;
 use crate::ui::Ui;
 use crate::world::World;
 use global_uniform::GlobalUniform;
@@ -280,7 +281,10 @@ impl<'a> Display<'a> {
         self.global_uniform.write_data(
             &self.queue,
             GlobalUniformData {
-                camera_pos: [ui.camera.pos.x as f32, ui.camera.pos.y as f32],
+                camera_pos: [
+                    ui.camera.pos.x(PositionMode::Pixels) as f32,
+                    ui.camera.pos.y(PositionMode::Pixels) as f32,
+                ],
                 camera_zoom: ui.camera.zoom_multiplier(),
                 ..*self.global_uniform.data()
             },
