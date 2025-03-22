@@ -1,4 +1,5 @@
 mod display;
+mod position;
 mod ui;
 mod world;
 
@@ -123,11 +124,4 @@ pub fn init_logging() {
             env_logger::init();
         }
     }
-}
-
-#[derive(Default, Debug)]
-pub struct Position {
-    // Note that fixed-point decimal numbers would be more efficient (they would just take more effort).
-    pub x: f64,
-    pub y: f64,
 }

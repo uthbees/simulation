@@ -1,5 +1,5 @@
+use crate::position::IntChunkCoordinates;
 use crate::world::tile::Tile;
-use crate::Position;
 
 /// A 32x32 chunk of the map.
 #[derive(Default)]
@@ -14,7 +14,7 @@ impl Chunk {
         32
     }
 
-    pub fn generate(position: &ChunkPosition) -> Self {
+    pub fn generate(position: IntChunkCoordinates) -> Self {
         let mut chunk = Self {
             ..Default::default()
         };
@@ -25,33 +25,5 @@ impl Chunk {
         chunk.tiles[4][3] = Tile::Blue;
 
         chunk
-    }
-}
-
-/// The position of a chunk in terms of how far it is from the origin chunk (the one with a chunk
-/// position of 0, 0 that has the 0, 0 world coordinate in its bottom left corner).
-#[derive(Clone, Hash, Eq, PartialEq)]
-pub struct ChunkPosition {
-    pub x: i32,
-    pub y: i32,
-}
-
-impl ChunkPosition {
-    pub fn from_world_coords(pos: &Position) -> Self {
-        let int_x = pos.x as i32;
-        let int_y = pos.y as i32;
-
-        Self {
-            x: if int_x >= 0 {
-                int_x / 32
-            } else {
-                (int_x / 32) - 1
-            },
-            y: if int_y >= 0 {
-                int_y / 32
-            } else {
-                (int_y / 32) - 1
-            },
-        }
     }
 }

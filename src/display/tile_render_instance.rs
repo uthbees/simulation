@@ -1,6 +1,6 @@
 use crate::display::get_linear_rgb;
-use crate::world::{Chunk, ChunkPosition, Tile, World};
-use crate::Position;
+use crate::position::{IntChunkCoordinates, Position, PositionMode};
+use crate::world::{Tile, World};
 use wgpu::{BufferAddress, VertexAttribute, VertexBufferLayout, VertexFormat, VertexStepMode};
 
 #[repr(C)]
@@ -46,64 +46,46 @@ impl TileRenderInstance {
         let screen_tile_height =
             f64::from(screen_height) / f64::from(camera_zoom) / f64::from(Tile::width_px());
 
-        let screen_left_edge = screen_center_pos.x - (screen_tile_width / 2.0);
-        let screen_right_edge = screen_center_pos.x + (screen_tile_width / 2.0);
-        let screen_bottom_edge = screen_center_pos.y - (screen_tile_height / 2.0);
-        let screen_top_edge = screen_center_pos.y + (screen_tile_height / 2.0);
-        println!(
-            "Center: {screen_center_pos:?}, left: {screen_left_edge}, right: {screen_right_edge}"
-        );
+        let screen_left_edge = screen_center_pos.x(PositionMode::Tiles) - (screen_tile_width / 2.0);
+        let screen_right_edge =
+            screen_center_pos.x(PositionMode::Tiles) + (screen_tile_width / 2.0);
+        let screen_bottom_edge =
+            screen_center_pos.y(PositionMode::Tiles) - (screen_tile_height / 2.0);
+        let screen_top_edge = screen_center_pos.y(PositionMode::Tiles) + (screen_tile_height / 2.0);
 
-        let bottom_left_chunk_pos = ChunkPosition::from_world_coords(&Position {
-            x: screen_left_edge,
-            y: screen_bottom_edge,
-        });
-        let top_right_chunk_pos = ChunkPosition::from_world_coords(&Position {
-            x: screen_right_edge,
-            y: screen_top_edge,
-        });
-
-        println!(
-            "Rendering x: {}-{}, y: {}-{}",
-            bottom_left_chunk_pos.x,
-            top_right_chunk_pos.x,
-            bottom_left_chunk_pos.y,
-            top_right_chunk_pos.y
-        );
+        let bottom_left_chunk_pos =
+            Position::new(screen_left_edge, screen_bottom_edge, PositionMode::Tiles)
+                .into_int_chunk_coords();
+        let top_right_chunk_pos =
+            Position::new(screen_right_edge, screen_top_edge, PositionMode::Tiles)
+                .into_int_chunk_coords();
 
         let tile_width_px = f64::from(Tile::width_px());
 
-        // TODO: Fix the tile rendering.
-        //  It seems to be rendering correctly at all zooms now when at 0,0, but never at any other position.
-        //  - Is it sometimes grabbing the wrong chunks?
-        //  - Is the zoom being applied correctly at every step?
-
         for chunk_x in bottom_left_chunk_pos.x..=top_right_chunk_pos.x {
             for chunk_y in bottom_left_chunk_pos.y..=top_right_chunk_pos.y {
-                if let Some(chunk) = &world.chunks.get(&ChunkPosition {
+                if let Some(chunk) = &world.chunks.get(&IntChunkCoordinates {
                     x: chunk_x,
                     y: chunk_y,
                 }) {
-                    let chunk_screen_x =
-                        f64::from(chunk_x * Chunk::side_size()) + screen_center_pos.x;
-                    let chunk_screen_y =
-                        f64::from(chunk_y * Chunk::side_size()) + screen_center_pos.y;
+                    let chunk_pos =
+                        Position::new(f64::from(chunk_x), f64::from(chunk_y), PositionMode::Chunks);
 
                     for (x_within_chunk, column) in chunk.tiles.iter().enumerate() {
                         for (y_within_chunk, tile) in column.iter().enumerate() {
                             tile_render_instances.push(TileRenderInstance {
                                 position: [
-                                    ((x_within_chunk as f64 + chunk_screen_x) * tile_width_px)
-                                        as f32,
-                                    ((y_within_chunk as f64 + chunk_screen_y) * tile_width_px)
-                                        as f32,
+                                    ((x_within_chunk as f64 + chunk_pos.x(PositionMode::Tiles))
+                                        * tile_width_px) as f32,
+                                    ((y_within_chunk as f64 + chunk_pos.y(PositionMode::Tiles))
+                                        * tile_width_px) as f32,
                                 ],
                                 color: get_linear_rgb(tile.color()),
                             });
                         }
                     }
                 } else {
-                    println!("Tried to render un-generated chunk!");
+                    println!("Tried to render ungenerated chunk!");
                 }
             }
         }
