@@ -2,6 +2,8 @@ struct GlobalUniform {
     window_size_px: vec2<f32>,
     camera_pos: vec2<f32>,
     camera_zoom: f32,
+    // Padding for 16-bit alignment.
+    padding: vec3<f32>
 };
 
 @group(0) @binding(0)
