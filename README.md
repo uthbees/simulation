@@ -8,7 +8,7 @@ To build the web version, install `wasm-pack` (with `cargo install wasm-pack`) a
 
 An experimental "simulation", made so that I can play around with various low-level technologies (for example, OpenGL).
 
-As of this writing, the project is fairly bare-bones, but I might add more features to it later.
+As of this writing, the project is fairly bare-bones, but I might add more features to it later. (Although it's unlikely since I generally prefer to use all the tools available rather than doing things from scratch like I'm trying to do here.)
 
 Features:
 - Procedural 2D terrain generation
