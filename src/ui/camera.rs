@@ -121,4 +121,4 @@ const CAMERA_SPEED_PX: f64 = 10.0;
 /// The amount each zoom increment zooms in/out.
 const CAMERA_ZOOM_LEVEL_MULTIPLIER: f32 = 1.15;
 const CAMERA_MAX_ZOOM_LEVEL: f32 = 5.0;
-const CAMERA_MIN_ZOOM_LEVEL: f32 = -20.0;
+const CAMERA_MIN_ZOOM_LEVEL: f32 = -25.0;

@@ -1,4 +1,5 @@
 mod chunk;
+mod perlin_noise;
 mod tile;
 
 use crate::position::IntChunkCoordinates;

@@ -1,5 +1,3 @@
-Note: This project is incomplete. (This was a "learn Rust" project as much as it was an attempt to port the original to a language that easily supports WASM.)
-
 ### Setting up
 
 Everything is standard git/Rust, except that the git hooks are stored in the `.githooks` directory. Run `git config --local core.hooksPath .githooks` when setting up a new environment.

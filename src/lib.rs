@@ -1,6 +1,7 @@
 mod display;
 mod position;
 mod ui;
+mod utils;
 mod world;
 
 use crate::display::Display;

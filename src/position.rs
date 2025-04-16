@@ -105,3 +105,9 @@ pub struct IntChunkCoordinates {
     pub x: i32,
     pub y: i32,
 }
+
+impl IntChunkCoordinates {
+    pub fn into_bottom_left_tile_pos(self) -> Position {
+        Position::new(f64::from(self.x), f64::from(self.y), PositionMode::Chunks)
+    }
+}
