@@ -354,7 +354,7 @@ pub fn create_window(event_loop: &EventLoop<()>) -> Window {
 
         // winit doesn't allow sizing with CSS, so we have to set the size manually when on web.
         // Note that this sets the size of the canvas on web, not the window itself.
-        let _ = window.request_inner_size(PhysicalSize::new(2048, 1024));
+        let _ = window.request_inner_size(PhysicalSize::new(1000, 1000));
     }
 
     window
