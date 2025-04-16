@@ -2,8 +2,11 @@ struct GlobalUniform {
     window_size_px: vec2<f32>,
     camera_pos: vec2<f32>,
     camera_zoom: f32,
-    // Padding for 16-bit alignment.
-    padding: vec3<f32>
+    // Padding - WASM wants 16-byte alignment, but it doesn't like it when we're exactly 16-bit aligned
+    // for some reason. I don't know why, but it seems to want the shader uniform to be 16-bit aligned
+    // minus 4 bits with the actual data representation in Rust actually 16-bit aligned, with those 4
+    // bits present.
+    padding: vec2<f32>
 };
 
 @group(0) @binding(0)

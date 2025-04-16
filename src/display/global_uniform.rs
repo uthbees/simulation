@@ -85,7 +85,7 @@ impl Default for GlobalUniformData {
             window_size_px: [1.0, 1.0],
             camera_pos: [0.0, 0.0],
             camera_zoom: 1.0,
-            padding: [0.0, 0.0, 0.0],
+            padding: [0.0; 3],
         }
     }
 }
