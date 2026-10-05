@@ -16,3 +16,6 @@ Everything is standard git/Rust, except that the git hooks are stored in the `.g
 
 To build the web version, install `wasm-pack` (`cargo install wasm-pack`) and run `wasm-pack build --target web --debug`. The updated page will then be accessible from `index.html`, although you will need to use a web server to access it so that it can load the wasm file from `pkg`. (Your IDE can probably do this for you.)
 
+### AI disclaimer
+
+This project does not contain any AI-generated code.
